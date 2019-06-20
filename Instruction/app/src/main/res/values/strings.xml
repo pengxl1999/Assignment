@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">多机系统</string>
+    <string name="connect">连接</string>
+    <string name="start">开始</string>
+    <string name="send">新任务</string>
+    <string name="par1">参数1：</string>
+    <string name="par2">参数2：</string>
+</resources>
