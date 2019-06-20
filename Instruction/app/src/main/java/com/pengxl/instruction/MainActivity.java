@@ -115,11 +115,7 @@ public class MainActivity extends AppCompatActivity {
                 else {
                     connect.setActivated(false);
                     connect.setText("连接");
-                    try {
-                        socket.close();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    send.setEnabled(false);
                 }
             }
         });
@@ -135,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
         send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final Task task = new Task(0, new ArrayList<Integer>());
+                final Task task = new Task(0, new ArrayList<String>());
                 final int[] selectedItem = new int[1];
                 String[] choices = new String[]{"斐波那契", "高精度加法", "快速幂"};
                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this)
@@ -196,17 +192,14 @@ public class MainActivity extends AppCompatActivity {
         public void onClick(DialogInterface dialog, int which) {
             String regex="^[1-9]+[0-9]*$";
             Pattern p = Pattern.compile(regex);
-            Log.i("pengxl1999", "par1:" + par1.getText().toString());
             if(!p.matcher(par1.getText().toString()).matches()
                     || (!p.matcher(par2.getText().toString()).matches() && task.task != 0)) {
                 Toast.makeText(MainActivity.this, "请输入正整数！", Toast.LENGTH_SHORT).show();
                 return;
             }
-            Integer p1 = Integer.valueOf(par1.getText().toString());
-            task.parameters.add(p1);
+            task.parameters.add(par1.getText().toString());
             if(task.task != 0) {
-                Integer p2 = Integer.valueOf(par2.getText().toString());
-                task.parameters.add(p2);
+                task.parameters.add(par2.getText().toString());
             }
             new SendThread(task).start();
         }
@@ -281,23 +274,35 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 String[] s = message.split("_");
-                if(s.length != 3) {
+                if(s.length != 4) {
                     return;
                 }
                 Log.i("pengxl1999", message);
-                ArrayList<Integer> parameters = new ArrayList<>();
-                parameters.add(Integer.valueOf(s[1]));
-                parameters.add(Integer.valueOf(s[2]));
-                Task task = new Task(Integer.valueOf(s[0]), parameters);
-                Integer res = 0;
+                ArrayList<String> parameters = new ArrayList<>();
+                parameters.add(s[2]);
+                parameters.add(s[3]);
+                Task task = new Task(Integer.valueOf(s[1]), parameters);
+                task.id = Integer.valueOf(s[0]);
+                String res = "";
                 switch (task.task) {
                     case 0:
-                        res = Fibonacci.fib(task.parameters.get(0));
+                        //斐波那契
+                        Log.i("pengxl1999", "fib!");
+                        res = Fibonacci.fib(Integer.valueOf(s[2])).toString();
                         break;
+                    case 1:
+                        //高精度加法
+                        res = Sum.sum(s[2], s[3]);
+                        break;
+                    case 2:
+                        res = Power.power(Integer.valueOf(s[2]), Integer.valueOf(s[3]));
                     default:
                         break;
                 }
-                Log.i("pengxl1999", "res:" + res);
+                Log.i("pengxl1999", "res: " + res);
+                message = (task.task + 10) + "_" + task.id + "_" + res;
+                printWriter.println(message);
+                printWriter.flush();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -308,14 +313,12 @@ public class MainActivity extends AppCompatActivity {
 
         private Task task;
         private PrintWriter printWriter;
-        private BufferedReader bufferedReader;
 
         SendThread(Task task) {
             this.task = task;
             Log.i("pengxl1999", task.task + "");
             try {
                 this.printWriter = new PrintWriter(socket.getOutputStream());
-                this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             } catch (Exception e) {
                 e.printStackTrace();
             }

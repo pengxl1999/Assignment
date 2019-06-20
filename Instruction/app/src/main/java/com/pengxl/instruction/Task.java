@@ -1,14 +1,13 @@
 package com.pengxl.instruction;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Task implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class Task {
+    Integer id;
     Integer task;
-    ArrayList<Integer> parameters;
+    ArrayList<String> parameters;
 
-    public Task(int task, ArrayList<Integer> parameters) {
+    public Task(int task, ArrayList<String> parameters) {
         this.task = task;
         this.parameters = parameters;
     }

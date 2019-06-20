@@ -26,10 +26,12 @@ public class Server extends Thread {
 
     //服务器socket
     private ServerSocket serverSocket;
-    //存放运算结果
-    private LinkedList<String> result;
-    //任务队列，用于向各个计算机分配任务
-    private LinkedList<Task> taskQueue;
+    //未执行任务队列
+    static LinkedList<Task> taskQueue = new LinkedList<>();
+    //正在执行的任务
+    private LinkedList<Task> runningTask;
+    //已完成的任务
+    static LinkedList<Task> finishedTask = new LinkedList<>();
     //空闲的计算机个数
     private LinkedList<Socket> clients;
 
@@ -37,8 +39,8 @@ public class Server extends Thread {
         try {
             //开启socket
             serverSocket = new ServerSocket(8088);
-            taskQueue = new LinkedList<>();
             clients = new LinkedList<>();
+            runningTask = new LinkedList<>();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -104,7 +106,7 @@ public class Server extends Thread {
                 if(message == null) {
                     return -3;
                 }
-                System.out.println(message);
+                //System.out.println(message);
                 String[] s = message.split("_");
                 if(s.length != 3) {
                     return -2;
@@ -112,7 +114,12 @@ public class Server extends Thread {
                 if(Integer.valueOf(s[0]) == -1) {
                     return -1;
                 }
-                loadTask(s);
+                if(Integer.valueOf(s[0]) / 10 == 0) {
+                    loadTask(s);
+                }
+                if(Integer.valueOf(s[0]) / 10 == 1) {
+                    loadResult(s);
+                }
                 return Integer.valueOf(s[0]);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -134,13 +141,19 @@ public class Server extends Thread {
                 if(!taskQueue.isEmpty() && task == null) {
                     task = taskQueue.removeFirst();
                 }
+                //单个任务运行时间大于60s则认为超时
+                if(!runningTask.isEmpty() && System.currentTimeMillis() - runningTask.getFirst().startTime > 60000) {
+                    taskQueue.addLast(runningTask.removeFirst());
+                }
                 if(!clients.isEmpty() && task != null) {
                     client = clients.removeFirst();
                     try {
                         printWriter = new PrintWriter(client.getOutputStream());
-                        String message = task.task + "_" + task.parameters.get(0) + "_" + task.parameters.get(1);
+                        String message = task.id + "_" + task.task + "_" + task.parameters.get(0) + "_" + task.parameters.get(1);
                         printWriter.println(message);
                         printWriter.flush();
+                        task.startTime = System.currentTimeMillis();
+                        runningTask.addLast(task);
                         task = null;
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -148,7 +161,8 @@ public class Server extends Thread {
                     }
                 }
                 try {
-                    Thread.sleep(500);
+                    //每隔1s分配一次任务
+                    Thread.sleep(1000);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -157,11 +171,24 @@ public class Server extends Thread {
     }
 
     private synchronized void loadTask(String[] s) {
-        ArrayList<Integer> parameters = new ArrayList<>();
-        parameters.add(Integer.valueOf(s[1]));
-        parameters.add(Integer.valueOf(s[2]));
+        ArrayList<String> parameters = new ArrayList<>();
+        parameters.add(s[1]);
+        parameters.add(s[2]);
         Task task = new Task(Integer.valueOf(s[0]), parameters);
         //把任务加入队列
         taskQueue.addLast(task);
+    }
+
+    private synchronized void loadResult(String[] s) {
+        Integer id = Integer.valueOf(s[1]);
+        for(Task task : runningTask) {
+            if(task.id.equals(id)) {
+                task.result = s[2];
+                System.out.println(task.result);
+                finishedTask.add(task);
+                runningTask.remove(task);
+                break;
+            }
+        }
     }
 }
