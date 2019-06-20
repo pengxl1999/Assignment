@@ -2,3 +2,4 @@
 Server为服务器端
 Client为处理机端
 Instruction为Android端
+运算结果均对99991取模
