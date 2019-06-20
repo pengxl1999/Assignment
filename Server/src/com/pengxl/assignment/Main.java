@@ -73,17 +73,17 @@ public class Main extends JFrame{
      */
     private void loadData() {
         try {
-//            BufferedReader bufferedReader = new BufferedReader(new FileReader(new File("/Users/pengxianglong/Desktop/Assignment/tasks.txt")));
-//            String message;
-//            while((message = bufferedReader.readLine()) != null) {
-//                System.out.println(message);
-//                String[] s = message.split("_");
-//                ArrayList<String> parameters = new ArrayList<>();
-//                parameters.add(s[1]);
-//                parameters.add(s[2]);
-//                Task task = new Task(Integer.valueOf(s[0]), parameters);
-//                Server.taskQueue.add(task);
-//            }
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(new File("/Users/pengxianglong/Desktop/Assignment/tasks.txt")));
+            String message;
+            while((message = bufferedReader.readLine()) != null) {
+                System.out.println(message);
+                String[] s = message.split("_");
+                ArrayList<String> parameters = new ArrayList<>();
+                parameters.add(s[1]);
+                parameters.add(s[2]);
+                Task task = new Task(Integer.valueOf(s[0]), parameters);
+                Server.taskQueue.add(task);
+            }
             Server server = new Server();
             server.start();
             new UpdateThread().start();
